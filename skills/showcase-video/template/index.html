@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>showcase</title>
+    <style>
+      /* Fonts are local files (the render must not depend on the network). Use the product's own. */
+      @font-face {
+        font-family: 'Inter';
+        src: url('assets/fonts/inter-latin.woff2') format('woff2');
+        font-weight: 100 900;
+        font-display: block;
+      }
+      /* Replace with the product's real tokens, copied from its theme file (dark theme if it has one). */
+      :root {
+        --bg: oklch(0.145 0.028 272);
+        --card: oklch(0.185 0.028 272);
+        --secondary: oklch(0.255 0.03 272);
+        --border: oklch(1 0 0 / 0.1);
+        --fg: oklch(0.97 0.005 272);
+        --muted: oklch(0.705 0.02 272);
+        --primary: oklch(0.97 0.005 272);
+        --primary-fg: oklch(0.2 0.03 272);
+        --glow: oklch(0.55 0.16 268 / 0.35);
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--bg); }
+      body { font-family: 'Inter', system-ui, sans-serif; color: var(--fg); -webkit-font-smoothing: antialiased; }
+      .layer, .scene { position: absolute; inset: 0; }
+      .scene { overflow: hidden; }
+      #bgGlow { position: absolute; left: 50%; top: 50%; width: 1400px; height: 1000px; margin: -500px 0 0 -700px; background: radial-gradient(closest-side, var(--glow), transparent); }
+      #grain { position: absolute; inset: 0; width: 1920px; height: 1080px; pointer-events: none; }
+      #fade { background: #000; pointer-events: none; }
+
+      /* word reveals: each word rises inside its own clipped line */
+      .mline { display: block; overflow: hidden; padding: 0.06em 0.04em 0.1em; margin: -0.06em -0.04em -0.1em; }
+      .wd { display: inline-block; will-change: transform; }
+      .i { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      .cursor { position: absolute; left: 0; top: 0; width: 34px; height: 40px; z-index: 50; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.45)); }
+      .ring { position: absolute; left: 0; top: 0; border: 2px solid rgba(255, 255, 255, 0.8); border-radius: 50%; z-index: 49; }
+      /* streamed answers: fixed word spans (no reflow) + citation badges */
+      .aw { opacity: 0; }
+      .cb { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; margin: 0 2px; border-radius: 50%; background: var(--secondary); color: var(--fg); font-size: 12px; font-weight: 600; line-height: 1; vertical-align: 2px; opacity: 0; }
+      .cb .cbn { line-height: 1; }
+      .cb .cbl { position: absolute; width: 13px; height: 13px; }
+
+      /* S1 */
+      #s1 { display: grid; place-content: center; justify-items: center; gap: 36px; }
+      .s1-mark { width: 260px; height: 260px; }
+      .s1-mark svg { width: 100%; height: 100%; }
+      .s1-word { font-size: 96px; font-weight: 700; letter-spacing: -0.04em; }
+      /* S2 */
+      .win { position: absolute; left: 360px; top: 150px; width: 1200px; height: 780px; border: 1px solid var(--border); border-radius: 22px; background: var(--card); box-shadow: 0 40px 120px rgba(0, 0, 0, 0.5); overflow: hidden; }
+      .win-bar { height: 48px; display: flex; gap: 8px; align-items: center; padding: 0 20px; border-bottom: 1px solid var(--border); }
+      .win-bar i { width: 12px; height: 12px; border-radius: 50%; background: var(--secondary); }
+      .s2-thread { padding: 48px 120px; display: flex; flex-direction: column; gap: 28px; font-size: 26px; line-height: 1.5; }
+      .s2-q { align-self: flex-end; max-width: 70%; padding: 14px 22px; border-radius: 20px; background: var(--secondary); }
+      .s2-a p { max-width: 900px; }
+      .s2-composer { position: absolute; left: 120px; right: 120px; bottom: 44px; height: 72px; display: flex; align-items: center; padding: 0 12px 0 26px; border: 1px solid var(--border); border-radius: 24px; background: var(--bg); font-size: 24px; }
+      .s2-input { flex: 1; white-space: pre; }
+      .s2-input.empty::before { content: attr(data-ph); color: var(--muted); }
+      .s2-input.caret::after { content: ''; display: inline-block; width: 2px; height: 1.1em; margin-left: 2px; vertical-align: -0.2em; background: var(--fg); }
+      .s2-send { width: 48px; height: 48px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--primary); color: var(--primary-fg); font-size: 24px; }
+      /* S3 */
+      #s3 { display: grid; place-content: center; justify-items: center; gap: 22px; text-align: center; }
+      .s3-mark { width: 150px; height: 150px; margin-bottom: 18px; }
+      .s3-mark svg { width: 100%; height: 100%; }
+      .s3-word { font-size: 88px; font-weight: 700; letter-spacing: -0.04em; }
+      .s3-tag { font-size: 34px; color: var(--muted); }
+      .s3-url { margin-top: 26px; font-size: 26px; letter-spacing: 0.02em; opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div class="layer"><div id="bgGlow"></div></div>
+    <section id="s1" class="scene"></section>
+    <section id="s2" class="scene"></section>
+    <section id="s3" class="scene"></section>
+    <canvas id="grain" width="960" height="540"></canvas>
+    <div id="fade" class="layer"></div>
+    <script type="module" src="main.js"></script>
+  </body>
+</html>
